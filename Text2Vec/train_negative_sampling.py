@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-#import nltk
+import nltk
 #nltk.download('stopwords')
 from nltk.corpus import stopwords
 from sklearn.datasets import fetch_20newsgroups
@@ -12,6 +12,12 @@ from tensorflow.keras.layers import Dot
 from tensorflow.keras.utils import plot_model
 from IPython.display import SVG
 import gensim
+import tensorflow as tf
+from gensim.models.word2vec import Word2Vec
+
+import os
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+
 
 # 1. Load Datasets
 dataset = fetch_20newsgroups(shuffle=True, random_state=1, remove=('headers', 'footers', 'quotes'))
@@ -38,7 +44,6 @@ tokenized_doc = tokenized_doc.to_list()
 drop_train = list([index for index, sentence in enumerate(tokenized_doc) if len(sentence) <= 1])
 
 tokenized_doc = np.delete(tokenized_doc, drop_train, axis=0)
-print('총 샘플 수 :',len(tokenized_doc))
 
 tokenizer = Tokenizer()
 tokenizer.fit_on_texts(tokenized_doc)
@@ -48,8 +53,6 @@ idx2word = {value : key for key, value in word2idx.items()}
 encoded = tokenizer.texts_to_sequences(tokenized_doc)
 
 vocab_size = len(word2idx) + 1 
-print('단어 집합의 크기 :', vocab_size)
-
 
 # 3. Modify Dataset for Negative Sampling
 skip_grams = [skipgrams(sample, vocabulary_size=vocab_size, window_size=10) for sample in encoded]
@@ -58,7 +61,7 @@ skip_grams = [skipgrams(sample, vocabulary_size=vocab_size, window_size=10) for 
 # 4. Create SGNS (Skip-Gram with Negative Sampling)
 # hyper-parameters
 embedding_dim = 100
-epochs = 5
+epochs = 50
 
 # embedding tables
 w_inputs = Input(shape=(1, ), dtype='int32')
@@ -71,37 +74,30 @@ dot_product = Dot(axes=2)([word_embedding, context_embedding])
 dot_product = Reshape((1,), input_shape=(1, 1))(dot_product)
 output = Activation('sigmoid')(dot_product)
 
-model = Model(inputs=[w_inputs, c_inputs], outputs=output)
-model.summary()
-model.compile(loss='binary_crossentropy', optimizer='adam')
-plot_model(model, to_file='model3.png', show_shapes=True, show_layer_names=True, rankdir='TB')
 
-for epoch in range(1, epochs+1):
-    loss = 0
-    for _, elem in enumerate(skip_grams):
-        first_elem = np.array(list(zip(*elem[0]))[0], dtype='int32')
-        second_elem = np.array(list(zip(*elem[0]))[1], dtype='int32')
-        labels = np.array(elem[1], dtype='int32')
-        X = [first_elem, second_elem]
-        Y = labels
-        loss += model.train_on_batch(X,Y)  
-    print('Epoch :',epoch, 'Loss :',loss)
+with tf.device('/gpu:0'):
+        
+    model = Model(inputs=[w_inputs, c_inputs], outputs=output)
+    model.summary()
+    model.compile(loss='binary_crossentropy', optimizer='adam')
+    plot_model(model, to_file='model3.png', show_shapes=True, show_layer_names=True, rankdir='TB')
 
-
-# 5. Savd Embedding Vector
-f = open('vectors.txt' ,'w')
-f.write('{} {}\n'.format(vocab_size-1, embed_size))
-vectors = model.get_weights()[0]
-for word, i in tokenizer.word_index.items():
-    f.write('{} {}\n'.format(word, ' '.join(map(str, list(vectors[i, :])))))
-f.close()
+    for epoch in range(1, epochs+1):
+        loss = 0
+        for _, elem in enumerate(skip_grams):
+            first_elem = np.array(list(zip(*elem[0]))[0], dtype='int32')
+            second_elem = np.array(list(zip(*elem[0]))[1], dtype='int32')
+            labels = np.array(elem[1], dtype='int32')
+            X = [first_elem, second_elem]
+            Y = labels
+            loss += model.train_on_batch(X,Y)  
+        print('Epoch :',epoch, 'Loss :',loss)
 
 
-# 6. Load and Test Model
-w2v = gensim.models.KeyedVectors.load_word2vec_format('./vectors.txt', binary=False)
+    # 5. Savd Embedding Vector
+    f = open('vectors.txt' ,'w')
 
-print("positive with [doctor]")
-w2v.most_similar(positive=['doctor'])
-
-print("\npositive with [police]")
-w2v.most_similar(positive=['police'])
+    vectors = model.get_weights()[0]
+    for word, i in tokenizer.word_index.items():
+        f.write('{} {}\n'.format(word, ' '.join(map(str, list(vectors[i, :])))))
+    f.close()

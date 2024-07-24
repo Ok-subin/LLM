@@ -30,8 +30,6 @@ for string in sent_text:
 
 result = [word_tokenize(sentence) for sentence in normalized_text]
 
-print('총 샘플의 개수 : {}'.format(len(result)))
-
 
 # 2. Train Model
 model = Word2Vec(sentences=result, vector_size=100, window=5, min_count=5, workers=4, sg=0)
@@ -40,6 +38,13 @@ model = Word2Vec(sentences=result, vector_size=100, window=5, min_count=5, worke
 # 3.Test Model
 model_result = model.wv.most_similar("man")
 print(model_result)
+
+"""
+출력 예시
+[('woman', 0.8355434536933899), ('guy', 0.8176618814468384), ('boy', 0.76740562915802), ('lady', 0.7483574748039246), \ 
+ ('girl', 0.7273262143135071), ('soldier', 0.7074109315872192), ('gentleman', 0.6947587728500366), ('kid', 0.6841924786567688),87728500366), \ 
+ ('kid', 0.6841924786567688), ('surgeon', 0.6824308037757874), ('poet', 0.6695438623428345)]
+"""
 
 
 # 4. Save Model
