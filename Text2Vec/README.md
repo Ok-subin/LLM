@@ -1,8 +1,7 @@
-**gensim - Word2Vec 라이브러리 사용하여, 기본적인 모델의 훈련 방식 학습**   
----
+gensim - Word2Vec 라이브러리 사용하여, 기본적인 모델의 훈련 방식 학습   
 
 # train_ENG.py
-.xml 형식의 데이터셋 사용 ("https://raw.githubusercontent.com/ukairia777/tensorflow-nlp-tutorial/main/09.%20Word%20Embedding/dataset/ted_en-20160408.xml")
+.xml 형식의 데이터셋 사용 (https://raw.githubusercontent.com/ukairia777/tensorflow-nlp-tutorial/main/09.%20Word%20Embedding/dataset/ted_en-20160408.xml)
 
 ### Pre-processing Step
 * \<head>, \<url>, ... 등 제외한 , \<content>의 내용 추출
@@ -14,7 +13,7 @@
 
 
 # train_KOR.py
-.txt 형식의 네이버 영화 리뷰 데이터셋 사용 ("https://raw.githubusercontent.com/e9t/nsmc/master/ratings.txt")
+.txt 형식의 네이버 영화 리뷰 데이터셋 사용 (https://raw.githubusercontent.com/e9t/nsmc/master/ratings.txt)
 
 ### Pre-processing
 * NULL 제거
@@ -25,8 +24,9 @@
 
 
 # train_negative_sampling.py
+sklearn의 데이터셋 사용 (from sklearn.datasets import fetch_20newsgroups)  
 negative sampling 방식을 이용한 word2vec (skip-gram 방식)   
-sklearn의 데이터셋 사용 (from sklearn.datasets import fetch_20newsgroups)      
+    
 
 ### Pre-processing : negative sampling 방식에 맞게 데이터셋 수정
 * 특수 문자 제거
